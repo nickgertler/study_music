@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Study Music</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"> <!-- Use favicon.ico -->
+    <link rel="icon" type="image/png" href="favicon.png"> <!-- Use favicon.png -->
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f5acd4;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* Add this line to display items in a column */
+        }
+        #play-button {
+            margin-top: 10px; /* Add margin-top to create space between image and button */
+            padding: 10px 20px;
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="image-container">
+        <img id="image" src="dancetoad/dancetoad-1.png" alt="Animated Image">
+        <button id="play-button">Play</button> <!-- Move the button below the image -->
+    </div>
+
+    <script>
+        var actx = new (AudioContext || webkitAudioContext)(),
+            src = "perfectloop.mp3",
+            audioData, srcNode, gainNode;
+
+        var button = document.getElementById("play-button");
+        var image = document.getElementById("image");
+        var frameIndex = 1;
+        var animationInterval;
+
+        button.addEventListener("click", toggleAudioPlayback);
+
+        // Load the audio file (CORS needs to be allowed or we won't be able to decode the data)
+        fetch(src, { mode: "cors" })
+            .then(function(resp) { return resp.arrayBuffer() })
+            .then(decodeAudioData);
+
+        // Decode the audio file
+        function decodeAudioData(buffer) {
+            return actx.decodeAudioData(buffer);
+        }
+
+        // Toggle audio playback and image animation
+        function toggleAudioPlayback() {
+            if (!srcNode) {
+                createAudioSource();
+                startImageAnimation();
+                button.innerText = "Pause";
+            } else {
+                stopAudio();
+                stopImageAnimation();
+                button.innerText = "Play";
+            }
+        }
+
+        // Create audio source and start playback
+        function createAudioSource() {
+            fetch(src, { mode: "cors" })
+                .then(function(resp) { return resp.arrayBuffer() })
+                .then(function(buffer) {
+                    decodeAudioData(buffer)
+                        .then(function(decodedBuffer) {
+                            audioData = decodedBuffer;
+                            srcNode = actx.createBufferSource();
+                            srcNode.buffer = audioData;
+
+                            gainNode = actx.createGain();
+                            srcNode.connect(gainNode);
+                            gainNode.connect(actx.destination);
+
+                            srcNode.loop = true;
+                            srcNode.start();
+                        });
+                });
+        }
+
+        // Stop audio playback
+        function stopAudio() {
+            if (srcNode) {
+                srcNode.stop();
+                srcNode = null;
+            }
+        }
+
+        // Start image animation
+        function startImageAnimation() {
+            animationInterval = setInterval(animateImage, 100); // Change interval as needed
+        }
+
+        // Stop image animation
+        function stopImageAnimation() {
+            clearInterval(animationInterval);
+        }
+
+        // Animate image by cycling through frames
+        function animateImage() {
+            frameIndex++;
+            if (frameIndex > 5) {
+                frameIndex = 1;
+            }
+            image.src = "dancetoad/dancetoad-" + frameIndex + ".png";
+        }
+    </script>
+</body>
+</html>
